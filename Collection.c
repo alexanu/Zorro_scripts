@@ -1,5 +1,7 @@
 #define DATE  20110501	// some historical date
 #define ASSET_A "EURUSD_A"
+#define SYMBOLS "AUD/USD","USD/JPY","USD/CAD","GBP/USD","EUR/USD"
+
 
 
 
@@ -21,6 +23,8 @@
     StartDate = EndDate = 2014;
 	StartDate = EndDate = year(NOW);
 	EndDate = 20171231; // fixed simulation period 
+	MaxBars = 210; // Maximum number of bars of the simulation. Equivalent of Enddate
+
 	NumYears = 1;
 
 	string Years = panelGet(1,0);
@@ -33,9 +37,13 @@
 
 
 
-
 	BarPeriod = 1440; // 1 day
 	BarPeriod = 60;	// 1 hour bars
+	BarPeriod = 240; 
+		// Counter trend trading is affected by market cycles and more sensitive to the bar period than trend trading
+		// Bar periods that are in sync with the worldwide markets - such as 4 or 8 hours - ...
+		// ... are especially profitable with this type of trading
+
     
     LookBack = 0;
 
@@ -47,6 +55,8 @@
 
 
 	set(PARAMETERS,FACTORS,LOGFILE);  // generate and use optimized parameters and factors
+	set(PARAMETERS|TESTNOW);  // generate and use optimized parameters
+ 
     set(PLOTNOW,LOGFILE);
 	set(LOGFILE|PLOTNOW);
 	set(PLOTNOW|LEAN|PRELOAD); // reload prices after any cycle
@@ -54,8 +64,7 @@
 
 
 
-
-
+// Assets -----------------------------------------------------------------------------------------------
 
 	assetList("AssetsIB");
 	asset("SPY");
@@ -63,7 +72,7 @@
     asset("EUR/USD");
     while(asset(loop("EUR/USD","USD/JPY"))) {
 	while(asset(loop("EUR/USD","AUD/USD","GBP/USD")))
-	
+	while(Name = loop("AAPL", "MSFT", "GOOGL", "IBM", "MMM", "AMZN", "CAT", "CL"))
 
 	while(algo(loop("TRND","CNTR")))
     while(asset(loop(
@@ -85,19 +94,44 @@
 
 
 	TimeFrame = 4;
+while(algo(loop("H1","H4")))
+       TimeFrame = 1;
+       if(Algo == "H1")
+              TimeFrame = 4;
+       else if(Algo == "H4")
+              TimeFrame = 4*4;
+
+
+
+// Indicators -----------------------------------------------------------------------------------------------
+
+
+vars Price = series(price());
+var High = dayHigh(ET,1);
+
+
+vars Changes = series(diff(priceClose()));	
+diff(log(x)) // log return of x , since log(a/b) = log(a) - log(b)
+
+
+vars MMI_Raw = series(MMI(Price,300)); // Is market trending or not? Market Meanness Index
+vars MMI_Smooth = series(LowPass(MMI_Raw,500)); // smooth it with the LowPass filter
+
+vars Trend = series(LowPass(Price, optimize(500,300,800))); // Like moving average but faster
+
+var LP30 = LowPass(Price,30);
+var LP100 = LowPass(Price,100);
+vars R = series(LP30);
+vars Osc = series(StochEhlers(series(price()),10,20,10));
+
+vars Filtered = series(BandPass(Price,optimize(30,20,40),0.5));
+// BandPass is similar to LowPass + it dampens short cycles => curve with medium-period peaks and valleys
+vars Signal = series(FisherN(Filtered,500)); // Normalisation in order to compare with threshold
 
 
 
 
-	vars Price = series(price());
-	var High = dayHigh(ET,1);
-	vars MMI_Raws = series(MMI(Prices,300));
-    var LP30 = LowPass(Price,30);
-	var LP100 = LowPass(Price,100);
-    vars R = series(LP30);
-	vars Osc = series(StochEhlers(series(price()),10,20,10));
-
-
+// Costs -----------------------------------------------------------------------------------------------
 
 
 	Commission = 0.6;
@@ -111,14 +145,27 @@
 
 
 
+
+// Limits -----------------------------------------------------------------------------------------------
+
+
 	LifeTime = 3; 
 	EntryTime = LifeTime = 250; // close trades after 1 year
 	MaxLong = MaxShort = 1;
 	Stop = optimize(10,2,30) * ATR(100);
 	Trail = 4*ATR(100);
 	Trail = 0; // for trading trend
+	Trail = 4*ATR(100); // 4 average candles away from the current price
+		// Trailing often - not always - improves the profit of a strategy, ...
+		// but is almost always better than placing a profit target
+
 	Stop = TakeProfit = ATR(100);
 
+
+
+
+
+// IF conditions -----------------------------------------------------------------------------------------------
 
 
 	if(NumOpenTotal == 0) {
@@ -142,22 +189,45 @@
 		&& timeOffset(ET,0,9,30) == 0) 	// enter a trade at the 9:30 bar when the NYSE opens 
 
 
+	if(dow()== FRIDAY && hour()>= 18) { // On Friday afternoon GMT
+		exitLong("*"); // exit all open trades
+		exitShort("*");
+		}
+
+if(falling(MMI_Smooth)) { // smoothed MMI is falling => beginning of a trend
+
+
+
+	var dayL = optimize(40,10,80);
+	var dayS = optimize(40,10,80);
+	if (priceHigh() >= HH(dayL)) enterLong();
+	else if(priceLow() <= LL(dayS)) enterShort();
 
 
 
 
-
-
+// Print -----------------------------------------------------------------------------------------------
 
 
     printf("\nDownloading %s chain.. ",Asset);
-    printf("\nCall %i %.2f: Ask %.2f Bid %.2f",
-        ContractExpiry,ContractStrike,ContractAsk,ContractBid);
+    printf("\nCall %i %.2f: Ask %.2f Bid %.2f",ContractExpiry,ContractStrike,ContractAsk,ContractBid);
 	if(is(EXITRUN))
 		printf("\nTrade costs in percent of volatility - - - - - -");
 
 
-// plot signals and thresholds
+
+// Ploting ----------------------------------------------------------------------------------
+
+	PlotBars = 400; // number of bars to plot in the chart. Default - all
+	// PlotStart = 20181231; // start of the chart
+
+
+	PlotScale = 8;
+	PlotWidth = 800;
+	// PlotHeight1 = 350; // Height of the main chart
+	// PlotHeight2 = 80; // Height of additional charts (plot with type=NEW)
+	PlotHeight1 = PlotHeight2;
+
 	plot("Filtered",Filtered,NEW,BLUE);
 	plot("Signal",Signal,NEW,RED);
 	plot("Threshold1",1,0,BLACK);
