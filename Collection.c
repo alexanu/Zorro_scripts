@@ -107,6 +107,9 @@ while(algo(loop("H1","H4")))
 
 
 vars Price = series(price());
+vars CloseTS = series(priceClose());
+vars OpenTS = series(priceOpen());	
+
 var High = dayHigh(ET,1);
 
 
