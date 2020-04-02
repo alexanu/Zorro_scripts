@@ -133,6 +133,14 @@ vars Signal = series(FisherN(Filtered,500)); // Normalisation in order to compar
 
 
 
+vars Price = series(price());
+int num =NumRiseFall (Price,20);
+int pos = 3*num;
+plotBar("Price",pos,num,1,SUM+BARS,RED);
+
+
+
+
 
 // Costs -----------------------------------------------------------------------------------------------
 
@@ -196,6 +204,17 @@ vars Signal = series(FisherN(Filtered,500)); // Normalisation in order to compar
 		exitLong("*"); // exit all open trades
 		exitShort("*");
 		}
+
+
+	// Weekend change
+	if(dow() == SUNDAY &&lhour(ET) == 5) {	// wait until Sunday 5pm ET (use 1-hour bars)…
+		// … then get the price change from Friday 5pm ET
+		int FridayBar = timeOffset(ET,SUNDAY-FRIDAY,5,0);	
+		var PriceChange = priceClose(0) - priceClose(FridayBar);	
+
+
+
+
 
 if(falling(MMI_Smooth)) { // smoothed MMI is falling => beginning of a trend
 
