@@ -4,13 +4,13 @@
 ////////////////////////////////////////////////
 
 #define SPLIT_YEARS	// split into separate years
-//#define FIX_ZONE	-1 // add a time zone difference, f.i. for converting CST -> EST
-#define REMOVE_SPACES // was used for txt files
+#define FIX_ZONE	5 // add a time zone difference, f.i. original is in EST, we need UTC
+// #define REMOVE_SPACES // was used for txt files
 
 
 
-string InName = "DAT_ASCII_USDZAR_M1_2015.csv";  // name of a single year CSV file
-string OutName = "USDZAR.t6";
+// string InName = "DAT_ASCII_USDZAR_M1_2015.csv";  // name of a single year CSV file
+// string OutName = "USDZAR.t6";
 
 // string InName = ".\\sierra_csv\\continuous\\ESM19-BarData.txt";
 // string OutName = "ES_continuous.t6";
@@ -19,9 +19,14 @@ string OutName = "USDZAR.t6";
 //string OutName = "VIX"; // for separate years, f.i. VIX_2016.t6, VIX_2015.t6 etc.
 
 
+string InName ="D:\\Data\\A.txt";
+string OutName = "A.t6";
+// line format OHLC Vol
+string Format = "+0%Y%m%d,%H:%M,f3,f1,f2,f4,f6"; // unadjusted
+
 
 // HISTDATA line format: "20100103 170000;1.430100;1.430400;1.430100;1.430400;0"
-string Format = "+%Y%m%d %H%M%S;f3;f1;f2;f4;f6;f";
+// string Format = "+%Y%m%d %H%M%S;f3;f1;f2;f4;f6;f";
 
 // YAHOO line format "2015-05-29,43.45,43.59,42.81,42.94,10901500,42.94"
 //string Format = "%Y-%m-%d,f3,f1,f2,f4,f6,f5"; // unadjusted
