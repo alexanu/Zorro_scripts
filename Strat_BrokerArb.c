@@ -1,4 +1,8 @@
 // Broker arbitrage example ////////////////////////////
+// you can compare currency or CFD prices between broker A and broker B ...
+// ... and enter a long position with the cheaper broker and a short position with the other
+
+// There is special account list and asset list
 
 #define ASSET_A "EURUSD_A"
 #define ASSET_B "EURUSD_B"
@@ -18,24 +22,16 @@ function tick()
 		strdate(HMS,0),1000.*modf(second(),0),PriceA,PriceB);
 
 	asset(ASSET_A);
-	if(NumOpenShort && Difference < 0)
-		exitShort();
-	else if(NumOpenLong && Difference > 0)
-		exitLong();
-	else if(!NumOpenShort && Difference > Threshold)	// go short with the expensive asset
-		enterShort();
-	else if(!NumOpenLong && Difference < -Threshold) // go long with the cheap asset
-		enterLong();
-
+	if(NumOpenShort && Difference < 0) exitShort();
+	else if(NumOpenLong && Difference > 0) exitLong();
+	else if(!NumOpenShort && Difference > Threshold) enterShort(); // go short with the expensive asset
+	else if(!NumOpenLong && Difference < -Threshold) enterLong(); // go long with the cheap asset
+		
 	asset(ASSET_B);
-	if(NumOpenShort && Difference > 0)
-		exitShort();
-	else if(NumOpenLong && Difference < 0)
-		exitLong();
-	else if(!NumOpenShort && Difference < -Threshold)
-		enterShort();
-	else if(!NumOpenLong && Difference > Threshold)
-		enterLong();
+	if(NumOpenShort && Difference > 0) exitShort();
+	else if(NumOpenLong && Difference < 0) exitLong();		
+	else if(!NumOpenShort && Difference < -Threshold) enterShort();
+	else if(!NumOpenLong && Difference > Threshold) enterLong();
 }
 
 function run()

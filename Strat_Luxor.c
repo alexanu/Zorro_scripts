@@ -4,13 +4,15 @@
 function run()
 {
 //StartDate = 2004;
-set( PARAMETERS+FACTORS);
+// set(PARAMETERS+FACTORS);
 NumYears = 2;
 BarPeriod = 15;
 LookBack = 80*4*24;
 Capital = 50000;
 //Margin = OptimalF * (Capital + sqrt(ProfitClosed));
-Margin = 0.02*(Capital + sqrt(ProfitClosed));
+// Margin = 0.02*(Capital + sqrt(ProfitClosed));
+Margin = 0.02*Capital;
+
 
 while(asset(loop(SYMBOLS)))
 while(algo(loop("H1","H4")))
@@ -22,24 +24,23 @@ while(algo(loop("H1","H4")))
               AlgoVar[3]=0;
               }
        TimeFrame = 1;
-       if(Algo == "H1")
-              TimeFrame = 4;
-       else if(Algo == "H4")
-              TimeFrame = 4*4;
+       if(Algo == "H1") TimeFrame = 4;
+       else if(Algo == "H4") TimeFrame = 4*4;
        
        vars Price = series(priceClose());
-       var dFast=optimize(2,1,10);
-       var dSlow=optimize(18,18,60);
+       var dFast=2;//optimize(2,1,10);
+       var dSlow=18;//optimize(18,18,60);
        var dMulF=2;//optimize(2,1,10);
        var dMulS=5;//optimize(4,4,16);
        var dSignal=19;//optimize(9,9,27);
-       var dStop=optimize(1.5,1,5);
-       var dLimit=optimize(3,2,10);
        vars Fast = series(MACD(Price,dFast,dFast*dMulF,dSignal));
        vars Slow = series(MACD(Price,dSlow,dSlow*dMulS,dSignal));
 
        var BuyLimit=AlgoVar[0], SellLimit=AlgoVar[1], BuyStop=AlgoVar[2], SellStop=AlgoVar[3];
        
+       var dStop=2;//optimize(1.5,1,5);
+       var dLimit=3;//optimize(3,2,10);
+
        if(crossOver(Fast,Slow)) {
               BuyStop = priceHigh() + 1*PIP;
             //   BuyStop = priceHigh() + dStop*ATRS(9);
@@ -53,8 +54,8 @@ while(algo(loop("H1","H4")))
             //   SellLimit = priceLow() - dLimit*ATRS(27);
               }
        
-       TakeProfit = optimize(3,3,10)*ATRS(90);
-       Stop = optimize(3,3,10)*ATRS(60);
+       TakeProfit = ATRS(90); // *optimize(3,3,10)
+       Stop = ATRS(60); // *optimize(3,3,10)
        
        if(!NumOpenLong && Fast[0] > Slow[0] && Price[0] < BuyLimit )
               enterLong(0,BuyStop);

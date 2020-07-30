@@ -1,56 +1,46 @@
 function run()
 {
-	set(TICKS,FAST);
+	set(PLOTNOW, PARAMETERS);
 	BarPeriod = 60;
 	NumYears = 10;
+	LookBack = 160;
 	assetList("AssetsFix");
 	asset("EUR/USD");
 	
-// get the RSI series. RSI: Ratio of the recent upwards data movement to the total data movement; range 0..100
+	// RSI: Ratio of the recent upwards data movement to the total data movement; range 0..100
 	vars Prices = series(priceClose());
-	vars RSI12 = series(RSI(Prices,12));
- 
-// set up stop / profit levels
-	Stop = 200*PIP;
-	TakeProfit = 200*PIP;
-	MaxLong = MaxShort = 1;
- 
-// if rsi crosses over buy level, exit short and enter long
-	if(crossOver(RSI12,75))
-		enterLong();
-// if rsi crosses below sell level, exit long and enter short
-	if(crossUnder(RSI12,25))
-		enterShort();
+	vars RSI12 = series(RSI(Prices,12)); 
 
-// measure the time
-	static var Time = 0;
-	if(is(INITRUN)) Time = timer();
-	if(is(EXITRUN)) printf("\nTime needed: >>> %.3f sec <<<",(timer()-Time)/1000);
+	int overbought = optimize(70, 60, 90,5);
+	int oversold = optimize(30, 10, 40, 5);
 
-
-	set(TICKS|FAST);
-	BarPeriod = 60;
-	NumYears = 10;
-	assetList("AssetsFix");
-	asset("EUR/USD");
-
-	vars Close = series(priceClose());
-	vars Rsi12 = series(RSI(Close,12));
-
-	Stop = 200*PIP;
-	TakeProfit = 200*PIP;
+	Stop = 4*ATR(100);
+	TakeProfit = 2*ATR(100);
 	MaxLong = MaxShort = 1;
 
-	if(crossOver(Rsi12,75))
-	reverseLong(1);
-	if(crossUnder(Rsi12,25))
-	reverseShort(1);
-}
+	//set up trend filter
+		TimeFrame = 4;	// 4-hourly trade filter
+		vars PriceH4 = series(price());	
+		int filtPeriod = optimize(5, 3, 10, 1)*24;
+		vars filter = series(LowPass(PriceH4, 200));	
 
 
+	if(crossOver(RSI12,overbought) and Prices[0] > filter[0] and NumOpenLong == 0) enterLong(); // if rsi crosses over buy level, exit short and enter long
+	if(crossUnder(RSI12,oversold) and Prices[0] < filter[0] and NumOpenShort == 0) enterShort(); // if rsi crosses below sell level, exit long and enter short
 
+	if(crossOver(RSI12,0) && crossUnder(RSI12,0))
+		{exitLong();
+		exitShort();
+		}
 
-
-
+	//plots
+		PlotBars = 250; //plot first 250 bars only for better viewing
+		PlotHeight1 = 400;
+		PlotHeight2 = 125;
+		PlotWidth = 1200;
+		ColorEquity = ColorDD = 0;
+		plot("rsi", RSI12, NEW, BLUE);
+		plot("overbought", overbought, 0, BLACK);
+		plot("oversold", oversold, 0, BLACK);
 
 }

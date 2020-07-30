@@ -22,20 +22,16 @@ int run()
 	var Price, Grid = 200*PIP; // set grid distance to 200 pips
 	var Close = priceClose();
 	
-// place pending trades at 5 grid lines 
-// above and below the current price
+	// place pending trades at 5 grid lines 
+	// above and below the current price
 	for(Price = 0; Price < Close+5*Grid; Price += Grid)
 	{
-// find the lowest grid line
-		if(Price < Close-5*Grid) continue;
-// place not more than 200 trades		
-		if(NumOpenTotal + NumPendingTotal > 200) break;
-// place short trades below the current price
+		if(Price < Close-5*Grid) continue; // find the lowest grid line
+		if(NumOpenTotal + NumPendingTotal > 200) break; // place not more than 200 trades
 		if(Price < Close and !findTrade(Price,Grid,true))
-			enterShort(1,Price,20*Grid,Grid);  		
-// place long trades above the current price
+			enterShort(1,Price,20*Grid,Grid);  // place short trades below the current price		
 		else if(Price > Close and !findTrade(Price,Grid,false))
-			enterLong(1,Price,20*Grid,Grid);
+			enterLong(1,Price,20*Grid,Grid); // place long trades above the current price
 	}
 }
 	
